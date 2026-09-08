@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Secuencias de RM</title>
+<style>
+  :root {
+    --fondo: #f3f5f8;
+    --tarjeta: #ffffff;
+    --texto: #1b1f24;
+    --texto-2: #4b5563;
+    --linea: #dfe4ea;
+    --acento: #0f5c6e;
+    --acento-suave: #e3f1f4;
+    --atajo-fondo: #fff5d6;
+    --atajo-texto: #5a3d00;
+    --marca-fondo: #f6f8fa;
+    --resalte: #ffe066;
+    --sombra: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #0f1216;
+      --tarjeta: #181c22;
+      --texto: #e8ebef;
+      --texto-2: #a3adb8;
+      --linea: #2a313a;
+      --acento: #63c5d8;
+      --acento-suave: #12333b;
+      --atajo-fondo: #3a2f12;
+      --atajo-texto: #ffe3a3;
+      --marca-fondo: #1f242c;
+      --resalte: #8a6d00;
+      --sombra: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    margin: 0;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.4;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  mark { background: var(--resalte); color: inherit; padding: 0 .08em; border-radius: 2px; }
+
+  /* ---------- cabecera fija ---------- */
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--tarjeta);
+    border-bottom: 1px solid var(--linea);
+    padding: calc(.75rem + env(safe-area-inset-top)) 1rem .75rem;
+    box-shadow: var(--sombra);
+  }
+  .cabecera-interior { max-width: 1400px; margin: 0 auto; }
+  .titulo-fila { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  h1 { font-size: 1.25rem; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  .contador { font-size: .875rem; color: var(--texto-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .buscador { position: relative; margin-top: .6rem; }
+  .buscador input {
+    width: 100%;
+    font: inherit;
+    font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+    padding: .6rem 2.4rem .6rem .9rem;
+    border: 1px solid var(--linea);
+    border-radius: 10px;
+    background: var(--fondo);
+    color: var(--texto);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .buscador input:focus { outline: 2px solid var(--acento); outline-offset: -1px; }
+  .buscador button {
+    position: absolute; right: .35rem; top: 50%; transform: translateY(-50%);
+    border: 0; background: transparent; color: var(--texto-2);
+    font-size: 1.25rem; line-height: 1; padding: .35rem .5rem; cursor: pointer;
+  }
+  .buscador button[hidden] { display: none; }
+
+  .filtros {
+    display: flex; gap: .4rem; margin-top: .6rem;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 2px;
+  }
+  .filtros::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto;
+    font: inherit; font-size: .8125rem;
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    border: 1px solid var(--linea);
+    background: var(--tarjeta);
+    color: var(--texto);
+    cursor: pointer;
+    touch-action: manipulation;
+    white-space: nowrap;
+  }
+  .chip[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
+  @media (prefers-color-scheme: dark) { .chip[aria-pressed="true"] { color: #0f1216; } }
+
+  .opciones { display: flex; gap: 1rem; margin-top: .5rem; font-size: .8125rem; color: var(--texto-2); }
+  .opciones label { display: inline-flex; align-items: center; gap: .35rem; cursor: pointer; }
+
+  /* ---------- contenido ---------- */
+  main { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+  .vacio { text-align: center; color: var(--texto-2); padding: 3rem 1rem; }
+  .vacio[hidden] { display: none; }
+
+  /* Tarjetas (móvil) */
+  .grupo-titulo {
+    font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--acento); margin: 1.25rem 0 .5rem; padding-left: .25rem;
+  }
+  .grupo-titulo:first-child { margin-top: .25rem; }
+  .tarjeta {
+    background: var(--tarjeta);
+    border: 1px solid var(--linea);
+    border-radius: 14px;
+    padding: .9rem 1rem;
+    margin-bottom: .75rem;
+    box-shadow: var(--sombra);
+  }
+  .tarjeta h2 { font-size: 1.0625rem; margin: 0 0 .5rem; line-height: 1.3; }
+  .atajo {
+    background: var(--atajo-fondo); color: var(--atajo-texto);
+    border-radius: 8px; padding: .5rem .7rem; font-size: .9375rem; margin-bottom: .6rem;
+  }
+  .atajo::before { content: "Atajo visual"; display: block; font-size: .6875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .8; margin-bottom: .15rem; }
+  .campo { margin: .45rem 0; font-size: .9375rem; }
+  .campo b { display: block; font-size: .6875rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-2); margin-bottom: .1rem; }
+  .compacta .campo { display: none; }
+  .marcas {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin-top: .6rem;
+  }
+  .marca { background: var(--marca-fondo); border-radius: 8px; padding: .4rem .6rem; font-size: .875rem; min-width: 0; overflow-wrap: anywhere; }
+  .marca b { display: block; font-size: .6875rem; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
+
+  /* Tabla (escritorio) */
+  .tabla-envoltorio { display: none; }
+  table { border-collapse: collapse; width: 100%; font-size: .875rem; }
+  th, td { text-align: left; vertical-align: top; padding: .55rem .7rem; border-bottom: 1px solid var(--linea); overflow-wrap: anywhere; }
+  th {
+    position: sticky; top: var(--alto-cabecera, 0px);
+    background: var(--acento-suave); color: var(--texto);
+    font-size: .75rem; letter-spacing: .06em; text-transform: uppercase;
+    z-index: 5;
+  }
+  td.c-nombre { font-weight: 700; }
+  td.c-atajo { background: var(--atajo-fondo); color: var(--atajo-texto); }
+  td.c-familia { color: var(--texto-2); font-size: .8125rem; }
+  tr:nth-child(even) td:not(.c-atajo) { background: var(--marca-fondo); }
+  .compacta .col-oculta { display: none; }
+
+  @media (min-width: 1200px) {
+    body { font-size: 15px; }
+    .tarjetas { display: none; }
+    /* Sin overflow propio: así la fila de títulos se pega al borde de la cabecera fija. */
+    .tabla-envoltorio {
+      display: block;
+      background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 12px; box-shadow: var(--sombra);
+    }
+    .filtros { flex-wrap: wrap; overflow: visible; }
+    h1 { font-size: 1.4rem; }
+  }
+
+  footer { max-width: 1400px; margin: 0 auto; padding: 1rem 1rem 2rem; color: var(--texto-2); font-size: .8125rem; }
+  footer ul { padding-left: 1.2rem; margin: .4rem 0; }
+  footer li { margin: .2rem 0; }
+
+  @media print {
+    .cabecera, .opciones, footer .no-imprimir { display: none; }
+    .tarjetas { display: none; }
+    .tabla-envoltorio { display: block; border: 0; box-shadow: none; }
+    body { background: #fff; color: #000; font-size: 9pt; }
+    th { position: static; }
+    td.c-atajo { background: #fff3c4; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="cabecera-interior">
+    <div class="titulo-fila">
+      <h1>Secuencias de resonancia magnética</h1>
+      <div class="contador" id="contador"></div>
+    </div>
+    <div class="buscador">
+      <input id="busqueda" type="search" placeholder="Buscar: FLAIR, FIESTA, edema, colesteatoma…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Buscar secuencia">
+      <button id="limpiar" type="button" aria-label="Borrar búsqueda" hidden>&times;</button>
+    </div>
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar por familia"></div>
+    <div class="opciones">
+      <label><input type="checkbox" id="compacta"> Vista compacta (solo atajo visual y nombres comerciales)</label>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="tarjetas" id="tarjetas"></div>
+  <div class="tabla-envoltorio">
+    <table id="tabla" aria-label="Secuencias de RM">
+      <thead>
+        <tr>
+          <th>Familia</th>
+          <th>Nombre global</th>
+          <th class="col-oculta">Utilidad</th>
+          <th class="col-oculta">Principio técnico</th>
+          <th>Atajo visual</th>
+          <th>Siemens</th>
+          <th>GE</th>
+          <th>Philips</th>
+          <th>Canon</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
+  <p class="vacio" id="vacio" hidden>Ninguna secuencia coincide con la búsqueda.</p>
+</main>
+
+<footer>
+  <b>Notas</b>
+  <ul>
+    <li>Los tiempos (TR, TE, TI) y los valores b son los típicos a 1,5&nbsp;T salvo que se indique; a 3&nbsp;T el TI y el T1 se alargan.</li>
+    <li>«—» indica que la marca no tiene nombre comercial propio para esa técnica o no la ofrece como producto; verificar en el equipo.</li>
+    <li>Los nombres comerciales cambian entre versiones de software. Ante la duda, buscar en el equipo por la familia y el principio técnico.</li>
+    <li>La última familia (aceleración y reconstrucción) no son secuencias sino técnicas que se combinan con cualquier secuencia.</li>
+  </ul>
+  <p class="no-imprimir">Funciona sin conexión: se puede guardar en el teléfono y abrir desde Archivos.</p>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var DATOS = [{"familia":"Spin eco (SE) convencional","nombre":"T1 SE","utilidad":"Anatomía de base; médula ósea y grasa; hemorragia subaguda (metahemoglobina); realce con gadolinio. Hoy reservada a columna, pediatría y órbita.","principio":"Pulso de 90° seguido de un 180° de refase, un eco por TR. Contraste T1: TR corto 400–700 ms, TE corto 10–20 ms. Lenta (3–6 min).","atajo":"Grasa blanca, LCR negro, sustancia gris más oscura que la blanca.","siemens":"SE","ge":"SE","philips":"SE","canon":"SE"},{"familia":"Spin eco (SE) convencional","nombre":"T2 SE","utilidad":"Edema, líquido y lesiones; hoy sustituida casi siempre por la T2 TSE, mucho más rápida.","principio":"Un eco por TR. Contraste T2: TR largo 2000–3000 ms, TE largo 80–120 ms. Muy lenta (8–12 min).","atajo":"LCR blanco; la grasa se ve gris intermedio (menos brillante que en la T2 TSE).","siemens":"SE","ge":"SE","philips":"SE","canon":"SE"},{"familia":"Spin eco (SE) convencional","nombre":"DP SE / doble eco (DP + T2)","utilidad":"Menisco, cartílago y ligamentos; sustancia blanca. El doble eco da DP y T2 en una sola adquisición.","principio":"TR largo 2000–3000 ms; TE corto 10–30 ms (DP) y un segundo eco a 80–100 ms (T2).","atajo":"Todo gris intermedio con máxima señal global; LCR apenas más brillante que el parénquima; fibrocartílago negro.","siemens":"SE doble eco","ge":"SE dual echo","philips":"SE dual echo","canon":"SE doble eco"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"T2 TSE / FSE","utilidad":"Secuencia T2 estándar: encéfalo, columna, articulaciones, pelvis (útero, próstata), hígado.","principio":"Tren de ecos (factor turbo / ETL 8–32) que rellena varias líneas del espacio K por TR. TR 3000–6000 ms, TE efectivo 80–120 ms. 2–4 min.","atajo":"LCR y agua blancos brillantes y, a diferencia de la SE, la grasa TAMBIÉN brillante.","siemens":"TSE","ge":"FSE","philips":"TSE","canon":"FSE"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"T1 TSE / FSE","utilidad":"T1 rápida de columna, pelvis, cuello y músculo-esquelético; T1 post-gadolinio cuando no se usa 3D GRE.","principio":"Tren de ecos corto (ETL 3–5) con TR 400–700 ms y TE 8–15 ms. 1–3 min.","atajo":"Como la T1 SE pero con la grasa algo más brillante y bordes ligeramente más borrosos.","siemens":"TSE T1","ge":"FSE T1","philips":"TSE T1","canon":"FSE T1"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"DP TSE (con o sin saturación grasa)","utilidad":"Rodilla, hombro, cadera y tobillo: menisco, labrum, cartílago, tendones y ligamentos. La DP con saturación grasa es la mejor para edema óseo.","principio":"TR 2000–4000 ms, TE 20–40 ms; con saturación grasa espectral (DP FS) el edema y el líquido destacan sobre el hueso.","atajo":"Máxima señal global; en la DP FS el hueso y la grasa quedan oscuros y el líquido o edema brillan.","siemens":"TSE PD / PD fs","ge":"FSE PD / PD FatSat","philips":"TSE PD / PD SPAIR","canon":"FSE PD / PD FatSat"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"TSE de disparo único (single-shot T2)","utilidad":"Abdomen (vía biliar, intestino, riñón), RM fetal, urografía, tórax y pacientes que no colaboran o no pueden contener la respiración.","principio":"Todo el espacio K en un solo TR; se adquiere poco más de la mitad y se completa por simetría de Fourier. TE 60–120 ms, menos de 1 s por corte.","atajo":"Líquido muy blanco, tejidos sólidos grises algo borrosos y ausencia total de artefacto de movimiento.","siemens":"HASTE","ge":"SSFSE","philips":"SSh-TSE (single-shot TSE)","canon":"FASE"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"TSE con recuperación rápida (driven equilibrium)","utilidad":"Oído interno, columna cervical y hidrografía: T2 con LCR muy brillante en menos tiempo.","principio":"Un pulso de −90° al final del tren de ecos devuelve la magnetización al eje longitudinal; permite acortar el TR conservando el contraste T2.","atajo":"LCR extraordinariamente brillante, con aspecto de mielografía.","siemens":"RESTORE","ge":"FRFSE (Fast Recovery FSE)","philips":"DRIVE","canon":"T2 PULS FSE"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"TSE 3D isotrópica de ángulo variable","utilidad":"T2, FLAIR y T1 volumétricas de encéfalo, columna, articulaciones y plexos; MRCP 3D; reconstrucciones en cualquier plano.","principio":"Tren de ecos muy largo (ETL 100–200) con ángulos de refase variables (<180°) para limitar el SAR y la borrosidad; vóxel isotrópico 0,5–1 mm. 4–7 min.","atajo":"Un único volumen que se reformatea en cualquier plano; la sangre en movimiento se ve negra (efecto «black blood»).","siemens":"SPACE","ge":"CUBE","philips":"VISTA / BrainVIEW","canon":"3D MVox"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"TSE radial con corrección de movimiento (PROPELLER)","utilidad":"Pacientes que se mueven, pediatría, T2, FLAIR y DWI cerebrales; hígado en respiración libre; menor artefacto de flujo y de metal dental.","principio":"El espacio K se adquiere en aspas rotatorias que se solapan en el centro; cada aspa se usa para corregir movimiento y fase. Cuesta un 30–50 % más de tiempo.","atajo":"Bordes nítidos aunque el paciente se mueva; los artefactos residuales aparecen como halos radiales suaves.","siemens":"BLADE","ge":"PROPELLER","philips":"MultiVane (XD)","canon":"JET"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"Hidrografía (colangio-RM, uro-RM, mielo-RM)","utilidad":"Vía biliar y pancreática (litiasis, estenosis), uréteres, saco tecal y raíces, laberinto.","principio":"T2 extremadamente pesada (TE 500–1000 ms): corte grueso de disparo único en apnea, o 3D TSE con navegador respiratorio. Solo el líquido estático conserva señal.","atajo":"Fondo negro y únicamente los conductos con líquido en blanco, como una colangiografía.","siemens":"HASTE thick slab / SPACE MRCP","ge":"SSFSE MRCP / CUBE MRCP","philips":"SSh-TSE MRCP / 3D MRCP (VISTA)","canon":"FASE MRCP / 3D MRCP"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"Neurografía 3D","utilidad":"Plexo braquial y lumbosacro, nervio ciático y nervios periféricos: neuropatías, avulsión, tumores de vaina.","principio":"3D TSE STIR o T2 con supresión de grasa y de vasos (pulsos de saturación de flujo), vóxel isotrópico; se revisa con MIP curvos.","atajo":"Nervios brillantes «como cables» sobre un fondo negro sin vasos.","siemens":"3D SPACE STIR (neurografía)","ge":"3D CUBE STIR","philips":"3D NerveVIEW","canon":"3D MVox STIR"},{"familia":"Turbo / fast spin eco (TSE / FSE)","nombre":"Reducción de artefacto metálico (MARS)","utilidad":"Prótesis de cadera y rodilla, columna instrumentada, tornillos: aflojamiento, infección, pseudotumor.","principio":"TSE con ancho de banda alto, STIR en lugar de saturación espectral y codificación extra en la dirección de corte (SEMAC) o multiespectral (MAVRIC) para recuperar los protones desplazados.","atajo":"El «agujero negro» deformado alrededor de la prótesis se reduce y aparece el hueso periprotésico.","siemens":"WARP (SEMAC / VAT)","ge":"MAVRIC SL","philips":"O-MAR","canon":"—"},{"familia":"Inversión-recuperación (IR)","nombre":"STIR","utilidad":"Edema de médula ósea, fracturas de estrés, metástasis óseas, espondilodiscitis, órbita, partes blandas; supresión grasa fiable cerca de metal o en zonas de campo heterogéneo.","principio":"Pulso de 180° previo; TI corto ≈ 150–180 ms (1,5 T) / 200–220 ms (3 T) anula la grasa en su paso por cero. TR ≥ 3000 ms, TE 30–60 ms. No usar tras gadolinio: también anula los tejidos que realzan.","atajo":"Grasa negra y homogénea con líquido y edema muy brillantes; imagen algo «sucia» por el ruido.","siemens":"STIR / TIRM","ge":"STIR","philips":"STIR","canon":"STIR"},{"familia":"Inversión-recuperación (IR)","nombre":"FLAIR (T2 FLAIR)","utilidad":"Esclerosis múltiple, lesiones periventriculares y corticales, hemorragia subaracnoidea, meningitis, encefalitis, gliomas y gliosis.","principio":"TI largo ≈ 2000–2500 ms (1,5 T) anula el LCR; TR 8000–11 000 ms, TE 100–140 ms. 3–5 min; también 3D (SPACE / CUBE / VISTA FLAIR).","atajo":"LCR negro y cualquier lesión con agua ligada brillante; el parénquima queda gris.","siemens":"FLAIR (TIRM dark fluid)","ge":"T2 FLAIR","philips":"FLAIR","canon":"FLAIR"},{"familia":"Inversión-recuperación (IR)","nombre":"T1 FLAIR (T1 IR)","utilidad":"Diferenciación gris-blanca (epilepsia, displasias corticales), columna, pediatría y mielinización.","principio":"TI intermedio ≈ 700–900 ms con lectura TSE; el contraste T1 se acentúa mucho. TR 2000–3000 ms, TE 10–20 ms.","atajo":"T1 «exagerada»: sustancia blanca muy blanca, gris muy gris y LCR negro.","siemens":"T1 FLAIR","ge":"T1 FLAIR","philips":"T1 IR-TSE","canon":"T1 FLAIR"},{"familia":"Inversión-recuperación (IR)","nombre":"DIR (doble inversión-recuperación)","utilidad":"Lesiones corticales e intracorticales de esclerosis múltiple, displasias, epilepsia.","principio":"Dos pulsos de inversión con TI distintos anulan a la vez el LCR y la sustancia blanca; TR muy largo, lectura 3D TSE. 5–8 min.","atajo":"Solo la sustancia gris (y las lesiones) queda visible; el resto del cerebro es negro.","siemens":"DIR (SPACE DIR)","ge":"DIR (CUBE DIR)","philips":"DIR (VISTA)","canon":"DIR"},{"familia":"Inversión-recuperación (IR)","nombre":"PSIR (IR sensible a la fase)","utilidad":"Realce tardío miocárdico sin depender del TI exacto; lesiones de EM en médula cervical; contraste gris-blanca.","principio":"IR con reconstrucción que conserva el signo de la magnetización; el contraste T1 es lineal y no obliga a acertar el TI de anulación.","atajo":"Mayor rango de grises: miocardio sano negro, cicatriz blanca y sin franjas por TI mal elegido.","siemens":"PSIR","ge":"PSIR (PS-MDE)","philips":"PSIR","canon":"PSIR"},{"familia":"Inversión-recuperación (IR)","nombre":"Realce tardío de gadolinio (LGE, IR-GRE)","utilidad":"Cicatriz de infarto, viabilidad, miocarditis, amiloidosis, sarcoidosis, miocardiopatías.","principio":"10–20 min tras el gadolinio; IR con TI ajustado (≈ 250–350 ms) para anular el miocardio sano; lectura GRE segmentada 2D o 3D en apnea de 8–15 s.","atajo":"Miocardio sano negro y cicatriz blanca brillante con patrón subendocárdico (isquémico) o mesocárdico (no isquémico).","siemens":"TurboFLASH IR (LGE) / PSIR","ge":"MDE (Myocardial Delayed Enhancement)","philips":"IR-TFE (LGE) / PSIR","canon":"LGE (IR-FE) / PSIR"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE T1 spoiled 2D","utilidad":"T1 rápida en apnea (abdomen), fase / fuera de fase, T1 dinámica; con TE largo se convierte en T2*.","principio":"Sin pulso de 180°: ángulo de báscula 10–90° y gradiente «spoiler» que destruye la magnetización transversal residual. TR 100–250 ms, TE 2–5 ms (T1) o 15–30 ms (T2*). Segundos por corte.","atajo":"Aspecto plano, hueso cortical y aire muy negros; la grasa y el gadolinio brillan; susceptibilidad exagerada.","siemens":"FLASH","ge":"SPGR","philips":"T1-FFE","canon":"FE (Field Echo)"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE T1 ultrarrápida (turbo GRE)","utilidad":"Localizadores, cine cardíaco, perfusión de primer paso, RM fetal, fluoroscopia-RM, secuencias con pulso de preparación.","principio":"TR muy corto 2–10 ms, TE 1–3 ms, ángulo 5–15°, a menudo con pulso preparatorio (IR o saturación). Una imagen en menos de 1 s.","atajo":"Imagen rápida, ruidosa y de bajo contraste salvo que lleve preparación IR.","siemens":"TurboFLASH","ge":"FSPGR / FGRE","philips":"TFE","canon":"Fast FE (FFE)"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE en fase / fuera de fase (desplazamiento químico)","utilidad":"Adenoma suprarrenal, esteatosis hepática, lesiones con grasa microscópica (angiomiolipoma, teratoma), médula ósea.","principio":"Dos ecos con TE en que agua y grasa están en fase (4,6 ms a 1,5 T) y en oposición (2,3 ms); la caída de señal en oposición de fase indica grasa dentro del vóxel. Una apnea.","atajo":"En fuera de fase aparece la «línea de tinta china» negra en las interfases grasa-órgano.","siemens":"FLASH doble eco (in / opposed phase)","ge":"Dual echo SPGR / LAVA-Flex","philips":"Dual FFE (in / opposed phase)","canon":"FE doble eco (in / out of phase)"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE T2* («hemo»)","utilidad":"Hemorragia, microsangrados, hemosiderina, calcificaciones, cavernomas, siderosis superficial; hierro hepático.","principio":"GRE con TE largo 15–30 ms y ángulo bajo 15–20°; sin refase de las inhomogeneidades locales, la susceptibilidad magnética se hace visible.","atajo":"Sangre y metal aparecen como manchas negras mayores que la lesión real (efecto «blooming»).","siemens":"FLASH T2* / GRE hemo","ge":"GRE T2*","philips":"T2*-FFE","canon":"FE T2*"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE multieco T2* (MEDIC)","utilidad":"Columna cervical (médula, raíces, forámenes) y cartílago; alternativa a la T2 TSE con menos artefacto de flujo de LCR.","principio":"Varios ecos de gradiente (3–6) promediados en una sola imagen T2*; más señal y menos artefacto de susceptibilidad que un eco único.","atajo":"Médula gris bien delimitada, LCR blanco y osteofitos muy negros.","siemens":"MEDIC","ge":"MERGE","philips":"mFFE","canon":"FE multieco"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE 3D T1 encefálica con preparación IR (MPRAGE)","utilidad":"Volumetría y atrofia, neuronavegación, epilepsia, T1 3D post-gadolinio, estudios de demencia.","principio":"Inversión de 180° seguida de un tren de ecos de gradiente segmentado; TI 900–1100 ms, TR 1900–2300 ms, TE 2–4 ms, ángulo 8–12°, vóxel 1 mm isotrópico. 4–6 min.","atajo":"Excelente contraste gris-blanca con LCR negro; los vasos con gadolinio brillan intensamente.","siemens":"MPRAGE / MP2RAGE","ge":"BRAVO (IR-FSPGR)","philips":"3D T1-TFE","canon":"MPRAGE (3D FE con IR)"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE 3D T1 de cuerpo con saturación grasa (dinámica)","utilidad":"Hígado, páncreas, riñón, pelvis, próstata, mama (dinámico con contraste), artro-RM; fases arterial, portal y tardía.","principio":"3D GRE spoiled con ángulo 10–15°, TR 3–5 ms, TE 1–2 ms y saturación grasa (espectral o Dixon), en una apnea de 15–20 s que se repite tras el contraste.","atajo":"Órganos grises homogéneos, grasa negra, vasos y lesiones realzadas blancas en cada fase.","siemens":"VIBE (VIBE Dixon, CAIPIRINHA-VIBE)","ge":"LAVA / LAVA-Flex / VIBRANT (mama)","philips":"THRIVE / e-THRIVE / mDixon","canon":"QUICK 3D"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"GRE 3D T1 radial en respiración libre","utilidad":"Hígado y tórax sin apnea, pediatría y pacientes sedados o disneicos; dinámico en respiración libre.","principio":"3D GRE spoiled con muestreo radial «stack of stars», tolerante al movimiento; TR 3–5 ms; 2–4 min en respiración libre.","atajo":"Sin fantasma respiratorio; ligera estriación radial en el fondo.","siemens":"StarVIBE","ge":"LAVA Star","philips":"3D VANE XD","canon":"—"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"SWI (imagen ponderada en susceptibilidad)","utilidad":"Microsangrados, malformaciones vasculares, venas, daño axonal difuso, trombosis venosa, calcio frente a sangre (mapa de fase), depósito de hierro.","principio":"GRE 3D T2* de alta resolución: la magnitud se multiplica por una máscara de fase filtrada y se presenta como mIP (proyección de mínima intensidad); TE 20–40 ms (1,5 T). 3–5 min.","atajo":"Venas y microsangrados como puntos y líneas negrísimas; en el mapa de fase el calcio y la sangre tienen signo opuesto.","siemens":"SWI","ge":"SWAN","philips":"SWIp","canon":"FSBB (Flow Sensitive Black Blood)"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"QSM (mapa cuantitativo de susceptibilidad)","utilidad":"Cuantificar hierro (Parkinson, esclerosis múltiple), distinguir calcio de hemorragia, tumores.","principio":"Reconstrucción de la susceptibilidad magnética (ppm) a partir de la fase de un GRE multieco; resuelve la ambigüedad del SWI.","atajo":"Mapa gris con núcleos basales y venas brillantes (paramagnéticos) y calcio oscuro (diamagnético).","siemens":"QSM","ge":"QSM","philips":"QSM","canon":"QSM"},{"familia":"Eco de gradiente (GRE) con spoiling","nombre":"Mapa T2* / R2* (cuantificación de hierro)","utilidad":"Sobrecarga de hierro hepática y cardíaca (talasemia, hemocromatosis), control de la quelación.","principio":"GRE multieco (8–16 ecos) con TE crecientes; el ajuste exponencial de la caída de señal da T2* (ms) o R2* (1/s) por píxel.","atajo":"El hígado se vuelve negro a medida que crece el TE; un T2* cardíaco normal es superior a 20 ms.","siemens":"T2* map / LiverLab","ge":"StarMap / IDEAL IQ (R2*)","philips":"mFFE T2* / mDixon Quant","canon":"T2* map"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"GRE coherente (FISP / GRASS)","utilidad":"Mielografía y columna, articulaciones y angiografía; hoy poco usada frente a la bSSFP.","principio":"GRE sin spoiler: la magnetización transversal residual se refocaliza en cada TR; contraste mixto T2*/T1 que depende del ángulo de báscula.","atajo":"Líquido brillante con TR corto y fondo parecido al T2*.","siemens":"FISP","ge":"GRASS","philips":"FFE","canon":"FE"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"GRE de eco invertido (PSIF)","utilidad":"T2 muy pesada rápida: hidrografía, oído interno, columna; hoy poco frecuente.","principio":"Eco de estado estacionario «invertido en el tiempo» (eco de espín estimulado) con contraste T2 pesado y TR corto.","atajo":"LCR brillante y parénquima oscuro; muy sensible al movimiento y al flujo.","siemens":"PSIF","ge":"SSFP","philips":"T2-FFE","canon":"—"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"DESS (doble eco en estado estacionario)","utilidad":"Cartílago de rodilla (artrosis, condromalacia) y estudios articulares 3D.","principio":"Adquiere en el mismo TR el eco FISP y el eco PSIF y los combina: imagen 3D de alta resolución con ponderación T2/T2*.","atajo":"Cartílago brillante y líquido sinovial aún más brillante en un volumen 3D.","siemens":"DESS","ge":"MENSA","philips":"—","canon":"—"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"bSSFP (SSFP balanceada)","utilidad":"Cine cardíaco, conducto auditivo interno y nervios craneales, plexos, columna en pacientes agitados, intestino (enterografía), fetal, angiografía sin contraste.","principio":"Gradientes balanceados en los tres ejes; señal proporcional a T2/T1; TR 3–5 ms, TE ≈ TR/2, ángulo 40–70°. Muy rápida y con mucha señal; sensible a bandas oscuras por heterogeneidad de campo (mejorar el shim).","atajo":"Sangre y LCR blancos brillantes con independencia del flujo; bandas negras curvas donde el campo es heterogéneo.","siemens":"TrueFISP","ge":"FIESTA","philips":"bFFE (balanced FFE) / B-TFE","canon":"True SSFP"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"bSSFP 3D de alta resolución (CISS)","utilidad":"Nervios craneales (VII-VIII, V), acueducto, quistes aracnoideos, fístulas de LCR, plexo sacro, conducto endolinfático.","principio":"Dos adquisiciones bSSFP con fase de RF alternada que se combinan para eliminar las bandas oscuras; vóxel 0,5–0,7 mm.","atajo":"LCR blanquísimo con los nervios craneales negros «flotando» en las cisternas.","siemens":"CISS","ge":"FIESTA-C","philips":"3D bFFE / 3D DRIVE (equivalente TSE)","canon":"3D True SSFP"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"Cine cardíaco","utilidad":"Fracción de eyección, volúmenes, contractilidad segmentaria, válvulas, masas.","principio":"bSSFP segmentada con sincronización ECG retrospectiva, 25–30 fases por ciclo, una apnea de 6–10 s por corte; a 3 T o con bandas se usa GRE spoiled; tiempo real si hay arritmia.","atajo":"Película en bucle con sangre blanca y miocardio gris.","siemens":"TrueFISP cine (retro-gated)","ge":"FIESTA cine","philips":"B-TFE cine","canon":"True SSFP cine"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"Tagging miocárdico (SPAMM)","utilidad":"Deformación miocárdica (strain), pericarditis constrictiva (adherencias), masa frente a miocardio.","principio":"Pulsos de saturación en rejilla aplicados antes del cine; la rejilla se deforma con la contracción del miocardio.","atajo":"Rejilla negra que se dobla con la contracción; si no se deforma, el tejido no es miocardio contráctil.","siemens":"Tagging (SPAMM)","ge":"Tagging","philips":"Tagging (CSPAMM)","canon":"Tagging"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"Mapas T1 y T2 miocárdicos","utilidad":"Miocarditis, amiloidosis, Fabry, hemocromatosis, fibrosis difusa (volumen extracelular con gadolinio).","principio":"T1: MOLLI / ShMOLLI (Look-Locker con lectura bSSFP a varios TI) en una apnea; T2: bSSFP con preparación T2 a 3–4 tiempos. Se ajusta una curva por píxel.","atajo":"Mapa en color donde el miocardio se compara con valores normales (T1 nativo ≈ 950–1050 ms a 1,5 T).","siemens":"MyoMaps (MOLLI, T2-prep)","ge":"MOLLI / CardioMaps","philips":"MOLLI / T2 map","canon":"MOLLI / T2 map"},{"familia":"Eco de gradiente en estado estacionario (SSFP)","nombre":"Perfusión miocárdica de primer paso","utilidad":"Isquemia inducible con estrés farmacológico (adenosina, regadenosón), microvasculopatía.","principio":"Preparación de saturación-recuperación y lectura rápida (GRE, bSSFP o híbrida EPI) en cada latido durante el bolo de gadolinio; 40–60 dinámicas de 3 cortes en eje corto.","atajo":"Defecto negro subendocárdico que persiste varios latidos mientras el resto del miocardio se blanquea.","siemens":"TurboFLASH perfusión (SR)","ge":"FGRE perfusión (SR)","philips":"TFE perfusión (SR)","canon":"FE perfusión (SR)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"DWI (difusión)","utilidad":"Ictus agudo (desde minutos), abscesos, tumores hipercelulares (linfoma, meduloblastoma), Creutzfeldt-Jakob, quiste epidermoide, próstata, hígado, mama y ganglios.","principio":"SE-EPI con dos gradientes de difusión (Stejskal-Tanner); valores b 0 y 1000 s/mm² en encéfalo, 50 / 400 / 800 en cuerpo; mapa ADC calculado. TR 3000–8000 ms, TE 60–100 ms, 1–3 min. Sensible a distorsión geométrica y susceptibilidad.","atajo":"Restricción real: brillante en DWI y OSCURA en ADC. «T2 shine-through»: brillante en ambos.","siemens":"DWI (ep2d_diff) / RESOLVE (multishot) / ZOOMit (FOV reducido)","ge":"DWI / MUSE (multishot) / FOCUS (FOV reducido)","philips":"DWI / iZOOM (FOV reducido) / multishot DWI","canon":"DWI (EPI)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"DWI no EPI (TSE / radial)","utilidad":"Colesteatoma y su recidiva, base de cráneo, órbita, zonas con aire o metal; pediatría.","principio":"Difusión con lectura TSE o PROPELLER en lugar de EPI: sin distorsión geométrica pero más lenta; b ≈ 800–1000.","atajo":"Colesteatoma: punto brillante en el ático sin la deformación típica del EPI.","siemens":"DWI TSE (HASTE-DWI)","ge":"PROPELLER DWI","philips":"TSE-DWI (DWI MultiVane)","canon":"DWI FASE"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"DTI y tractografía","utilidad":"Planificación quirúrgica (tracto corticoespinal, fascículo arcuato), traumatismo craneal, esclerosis múltiple, neurodesarrollo.","principio":"DWI con al menos 6 direcciones de gradiente (típico 20–64); se calcula el tensor y de él la FA, la MD y el mapa direccional en color. 5–10 min. Variantes: HARDI, DKI, NODDI.","atajo":"Mapa de colores: rojo = izquierda-derecha, verde = anteroposterior, azul = craneocaudal.","siemens":"DTI","ge":"DTI","philips":"DTI / FiberTrak","canon":"DTI"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"DWI de cuerpo entero (DWIBS)","utilidad":"Estadificación oncológica (mieloma, linfoma, cáncer de próstata metastásico), alternativa o complemento al PET.","principio":"DWI EPI en respiración libre con STIR para suprimir la grasa, b alto (800–1000) y varias estaciones; se presenta como MIP en escala de grises invertida.","atajo":"Imagen tipo PET invertida: lesiones negras sobre fondo blanco.","siemens":"Whole-body DWI (Composing)","ge":"Whole-body DWI","philips":"DWIBS","canon":"Body Vision (WB-DWI)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"Difusión avanzada (IVIM, DKI)","utilidad":"Hígado, próstata y tumores: separar perfusión de difusión (IVIM) o medir complejidad tisular (DKI). Uso sobre todo en investigación.","principio":"IVIM: múltiples b bajos (< 200) ajustados a un modelo biexponencial; DKI: b altos (2000–3000) que miden la desviación del comportamiento gaussiano.","atajo":"Se ven como una DWI normal; el valor está en los mapas (D, D*, f, K).","siemens":"IVIM / DKI (WIP)","ge":"IVIM / DKI (investigación)","philips":"IVIM / DKI (investigación)","canon":"IVIM / DKI (investigación)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"Perfusión DSC (T2*, primer paso)","utilidad":"Gliomas (grado, recidiva frente a radionecrosis), penumbra en el ictus, vasoespasmo.","principio":"GRE-EPI T2* repetida cada 1–2 s durante 60–90 s con bolo rápido de gadolinio (4–5 ml/s); la caída de señal se convierte en rCBV, rCBF, MTT y TTP.","atajo":"Cine en que el cerebro se oscurece al paso del bolo; mapas de rCBV en color.","siemens":"PWI (ep2d_perf)","ge":"PWI (DSC)","philips":"DSC / PRESTO","canon":"DSC (EPI perfusión)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"Perfusión DCE (T1, permeabilidad)","utilidad":"Mama, próstata (PI-RADS), tumores cerebrales (Ktrans), hígado, permeabilidad vascular.","principio":"3D GRE T1 (VIBE / LAVA / THRIVE) repetida cada 3–10 s durante 5–7 min tras el gadolinio; un modelo farmacocinético (Tofts) da Ktrans, Ve y Kep.","atajo":"Curvas de realce: el lavado rápido (tipo III) sugiere malignidad.","siemens":"TWIST-VIBE / DCE","ge":"DISCO / LAVA dinámica","philips":"4D-THRIVE / DCE","canon":"QUICK 3D dinámica (DCE)"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"ASL (marcaje arterial de espines)","utilidad":"Perfusión sin contraste: demencias, epilepsia, tumores, moyamoya, pediatría, insuficiencia renal.","principio":"Los protones de la sangre arterial se invierten en el cuello (pCASL / PASL); tras un retraso (PLD ≈ 1,5–2 s) se resta imagen marcada menos control; lectura 3D GRASE o espiral. 4–6 min.","atajo":"Mapa de flujo sanguíneo cerebral en color; hipoperfusión temporoparietal en la enfermedad de Alzheimer.","siemens":"ASL (PASL / pCASL 3D GRASE)","ge":"3D ASL (pCASL, FSE espiral)","philips":"pCASL / ASL (STAR)","canon":"ASTAR / pCASL"},{"familia":"Eco planar (EPI): difusión, perfusión y funcional","nombre":"RM funcional BOLD","utilidad":"Mapeo prequirúrgico de áreas motoras y del lenguaje; investigación (estado de reposo).","principio":"GRE-EPI T2* con TR 2–3 s durante 5–8 min con un paradigma o en reposo; la sangre oxigenada aumenta la señal local un 1–3 %.","atajo":"Manchas de color sobre la anatomía; solo tiene sentido tras el análisis estadístico.","siemens":"BOLD (ep2d_bold)","ge":"BOLD (fMRI)","philips":"FE-EPI BOLD","canon":"BOLD (EPI)"},{"familia":"Angiografía por RM","nombre":"TOF (tiempo de vuelo) 2D / 3D","utilidad":"Polígono de Willis, aneurismas, estenosis intracraneales, carótidas; venografía en 2D.","principio":"GRE spoiled T1 con TR corto que satura el tejido estacionario; la sangre que entra sin saturar brilla (efecto de entrada). 3D con MOTSA / TONE y banda de saturación venosa. 4–7 min. Pierde señal con flujo lento o en el plano.","atajo":"Arterias brillantes sobre fondo gris oscuro y MIP tipo arteriografía; la grasa y la metahemoglobina también brillan (trampa).","siemens":"3D TOF / 2D TOF","ge":"3D TOF / Inhance 3D Inflow","philips":"3D TOF (Inflow)","canon":"3D TOF"},{"familia":"Angiografía por RM","nombre":"Contraste de fase (PC)","utilidad":"Sentido y velocidad del flujo: venas, LCR en el acueducto (Chiari, hidrocefalia normotensiva), derivaciones; angiografía venosa.","principio":"Gradientes bipolares: el desfase es proporcional a la velocidad; se ajusta el VENC (10–20 cm/s para LCR, 60–100 cm/s para arterias). Da imagen de magnitud y de fase.","atajo":"Mapa de fase blanco o negro según el sentido del flujo; el tejido estacionario es gris medio.","siemens":"PC (Phase Contrast) 2D / 3D","ge":"PC / Inhance 3D Velocity","philips":"PCA (Phase Contrast Angio)","canon":"PCA"},{"familia":"Angiografía por RM","nombre":"4D Flow","utilidad":"Aorta, cardiopatías congénitas, válvulas, LCR: cuantificar volúmenes y patrones de flujo.","principio":"Contraste de fase 3D codificado en las tres direcciones y en el tiempo (cine), con sincronización cardíaca y navegador respiratorio; 8–15 min.","atajo":"Líneas de corriente de colores animadas dentro de la aorta.","siemens":"4D Flow","ge":"4D Flow","philips":"4D Flow","canon":"4D Flow"},{"familia":"Angiografía por RM","nombre":"Angio-RM con contraste (CE-MRA)","utilidad":"Aorta, troncos supraaórticos, arterias renales, periféricas y pulmonares: estenosis, disección, aneurismas.","principio":"3D GRE T1 ultrarrápida (TR 3 ms, TE 1 ms) en apnea de 15–20 s sincronizada con el pico arterial del gadolinio (bolo de prueba o disparo automático); sustracción con máscara y MIP.","atajo":"Arterias blancas y nítidas con el resto anulado; las venas aparecen en las fases posteriores.","siemens":"CE-MRA (FLASH 3D) + CARE Bolus","ge":"CE-MRA (FGRE 3D) + SmartPrep / Fluoro Trigger","philips":"CE-MRA (FFE 3D) + BolusTrak","canon":"CE-MRA + Visual Prep"},{"familia":"Angiografía por RM","nombre":"Angio-RM dinámica con resolución temporal","utilidad":"Malformaciones arteriovenosas, fístulas, cortocircuitos, dinámica arterial y venosa pulmonar y periférica, pediatría.","principio":"3D GRE con muestreo compartido del espacio K (keyhole / view sharing) que produce una fase cada 1–3 s durante el bolo.","atajo":"Película tipo angiografía digital: llenado arterial, capilar y venoso.","siemens":"TWIST","ge":"TRICKS","philips":"4D-TRAK","canon":"4D-MRA dinámica"},{"familia":"Angiografía por RM","nombre":"Angio-RM sin contraste por sustracción sístole-diástole","utilidad":"Arterias de miembros inferiores, sobre todo en insuficiencia renal (sin gadolinio).","principio":"3D TSE sincronizada con ECG: en sístole las arterias se ven negras (flujo rápido) y en diástole blancas; la resta deja solo las arterias.","atajo":"Arteriografía de piernas sin contraste con arterias blancas y venas ausentes.","siemens":"NATIVE SPACE","ge":"Inhance DeltaFlow","philips":"TRANCE","canon":"FBI (Fresh Blood Imaging)"},{"familia":"Angiografía por RM","nombre":"Angio-RM sin contraste por entrada tras inversión (inflow-IR)","utilidad":"Arterias renales, portal y hepáticas, carótidas, LCR; sin gadolinio.","principio":"3D bSSFP con pulso de inversión selectivo que anula el fondo y deja entrar sangre no invertida durante un retraso (BBTI / TI).","atajo":"Arterias renales brillantes sobre riñones «apagados» y venas anuladas.","siemens":"NATIVE TrueFISP","ge":"Inhance Inflow IR","philips":"b-TRANCE","canon":"Time-SLIP"},{"familia":"Angiografía por RM","nombre":"Angio-RM periférica sin contraste corte a corte (QISS)","utilidad":"Arteriopatía periférica sin gadolinio, alternativa rápida a la sustracción sístole-diástole.","principio":"2D bSSFP sincronizada con ECG con saturación del fondo y de las venas corte a corte; la sangre arterial que entra en diástole brilla.","atajo":"Arterias brillantes en cada corte axial que se apilan en un MIP de las piernas.","siemens":"QISS","ge":"—","philips":"—","canon":"—"},{"familia":"Angiografía por RM","nombre":"Imagen de pared vascular (sangre negra)","utilidad":"Vasculitis, disección, placa carotídea, aneurismas con pared que realza, y (tras gadolinio) metástasis leptomeníngeas.","principio":"3D TSE de ángulo variable o doble IR 2D que anula la señal de la sangre en movimiento; T1 antes y después de gadolinio con vóxel 0,5–0,7 mm.","atajo":"La luz del vaso es negra y la pared se ve como un anillo fino; el realce de la pared es patológico.","siemens":"T1 SPACE (dark blood) / TSE doble IR","ge":"CUBE T1 (black blood) / Double IR FSE","philips":"3D VISTA black blood / BB-TSE","canon":"3D MVox black blood / FSE doble IR"},{"familia":"Angiografía por RM","nombre":"TSE cardíaca de sangre negra (doble / triple IR)","utilidad":"Morfología cardíaca, masas, pericardio, edema miocárdico (versión STIR), displasia arritmogénica.","principio":"TSE con doble inversión (180° no selectivo y 180° selectivo del corte) que anula la sangre que fluye; un tercer pulso anula la grasa. Un corte por apnea.","atajo":"Cavidades negras y miocardio gris; en la versión STIR el edema brilla.","siemens":"Dark-blood TSE (double IR) / TIRM","ge":"Double IR FSE / Triple IR","philips":"BB-TSE (black blood)","canon":"Black-blood FSE (double IR)"},{"familia":"Angiografía por RM","nombre":"Venografía por RM (MRV)","utilidad":"Trombosis venosa cerebral, compresión de senos, anatomía venosa prequirúrgica.","principio":"2D TOF con saturación arterial, PC con VENC bajo, o 3D GRE T1 tras gadolinio (la más fiable).","atajo":"Senos venosos brillantes; el trombo aparece como un defecto de llenado.","siemens":"2D TOF venoso / PC / CE-MRV","ge":"2D TOF venoso / PC / CE-MRV","philips":"2D TOF venoso / PCA / CE-MRV","canon":"2D TOF venoso / PCA / CE-MRV"},{"familia":"Supresión de grasa y preparación del contraste","nombre":"Saturación grasa espectral (CHESS)","utilidad":"T2 y DP con supresión grasa articular, T1 con supresión tras gadolinio, mama, órbita.","principio":"Pulso de RF selectivo en la frecuencia de la grasa (−3,5 ppm ≈ 220 Hz a 1,5 T) seguido de un spoiler; exige un campo homogéneo (falla en los bordes, con metal, en cuello y pie).","atajo":"Grasa negra pero heterogénea en la periferia del campo de visión; el líquido sigue brillante.","siemens":"Fat Sat (FS) / Quick FatSat","ge":"Fat Sat (CHESS)","philips":"SPIR","canon":"Fat Sat (CHESS)"},{"familia":"Supresión de grasa y preparación del contraste","nombre":"Inversión espectral adiabática (SPAIR)","utilidad":"Abdomen, columna, cuello, mama, DWI corporal: más homogénea que la CHESS y, a diferencia del STIR, compatible con gadolinio.","principio":"Pulso de inversión adiabático selectivo para la grasa seguido de un TI de anulación; insensible a la heterogeneidad de B1.","atajo":"Grasa negra muy uniforme, líquido brillante y menos ruido que el STIR.","siemens":"SPAIR","ge":"SPECIAL / ASPIR","philips":"SPAIR","canon":"SPAIR"},{"familia":"Supresión de grasa y preparación del contraste","nombre":"Excitación selectiva de agua","utilidad":"Cartílago 3D de rodilla, nervios, angiografía y pediatría; rápida y sin aumento del SAR.","principio":"Pulsos binomiales (1-1, 1-2-1) que excitan solo el agua; la grasa nunca se excita. Se combina con GRE 3D.","atajo":"Cartílago brillante sobre hueso negro en cortes 3D finos.","siemens":"Water Excitation (WE)","ge":"Spectral-Spatial RF (SSRF)","philips":"ProSet","canon":"PASTA"},{"familia":"Supresión de grasa y preparación del contraste","nombre":"Dixon (separación agua-grasa)","utilidad":"Supresión grasa robusta con metal o campo heterogéneo, columna (T1 / T2 Dixon en lugar de STIR), cuerpo entero, PET-RM, cuantificación de grasa hepática (PDFF).","principio":"Dos o más ecos con agua y grasa en fase y en oposición; cálculo píxel a píxel que devuelve cuatro series: agua, grasa, en fase y fuera de fase. Aplicable a TSE y GRE.","atajo":"Cuatro imágenes de la misma adquisición: la de «agua» es la suprimida y la de «grasa» muestra solo la grasa.","siemens":"Dixon (TSE / VIBE Dixon, q-Dixon)","ge":"IDEAL / FLEX / LAVA-Flex / IDEAL IQ","philips":"mDixon / mDixon XD / mDixon Quant","canon":"WFS (Water Fat Separation)"},{"familia":"Supresión de grasa y preparación del contraste","nombre":"Transferencia de magnetización (MTC)","utilidad":"Aumenta el contraste del TOF y de la T1 post-gadolinio; esclerosis múltiple (ratio MTR); cartílago.","principio":"Pulso fuera de resonancia (1–2 kHz) que satura los protones ligados a macromoléculas; el intercambio con el agua libre reduce la señal de los tejidos estructurados (sustancia blanca, músculo).","atajo":"Parénquima más gris; los vasos y las lesiones que realzan resultan más llamativos.","siemens":"MTC","ge":"MT","philips":"MTC","canon":"MTC"},{"familia":"Espectroscopia (MRS)","nombre":"Espectroscopia de vóxel único (SVS)","utilidad":"Tumores (colina / NAA), abscesos, enfermedades metabólicas, epilepsia, encefalopatía hepática.","principio":"PRESS (90°-180°-180°) o STEAM (tres pulsos de 90°) seleccionan un vóxel de unos 8 cm³; TE corto 30–35 ms (más metabolitos: lípidos, mioinositol) o largo 135–144 ms (lactato invertido). 3–6 min.","atajo":"Un espectro, no una imagen: picos de NAA (2,0 ppm), creatina (3,0 ppm) y colina (3,2 ppm).","siemens":"SVS (PRESS / STEAM)","ge":"PROBE-P / PROBE-S","philips":"SV PRESS / STEAM","canon":"SVS (PRESS / STEAM)"},{"familia":"Espectroscopia (MRS)","nombre":"Espectroscopia multivóxel (CSI / MRSI)","utilidad":"Mapear metabolitos en un plano o volumen: gliomas (extensión, recidiva), próstata.","principio":"Codificación de fase 2D o 3D sobre un bloque grande; se obtienen mapas de colina, NAA y creatina. 8–15 min.","atajo":"Rejilla de espectros o mapa de color superpuesto a la anatomía.","siemens":"CSI","ge":"2D / 3D CSI (PROSE en próstata)","philips":"2D / 3D CSI","canon":"CSI"},{"familia":"Cuantitativas y avanzadas","nombre":"Mapa T2 (cartílago y tejidos)","utilidad":"Degeneración precoz del cartílago (condromalacia), músculo, edema miocárdico.","principio":"SE multieco (8–16 TE) con ajuste exponencial que devuelve el T2 en ms de cada píxel.","atajo":"Mapa de color del cartílago: rojo o amarillo donde el T2 se alarga (degeneración).","siemens":"T2 map (MapIt)","ge":"CartiGram","philips":"T2 map","canon":"T2 map"},{"familia":"Cuantitativas y avanzadas","nombre":"RM sintética","utilidad":"T1, T2, DP y FLAIR más mapas cuantitativos en una sola adquisición de unos 6 min; volumetría y mielina en pediatría.","principio":"TSE multieco con varios retardos de saturación-recuperación (MDME); se ajustan T1, T2 y DP y se «sintetiza» a posteriori cualquier contraste.","atajo":"De un mismo escáner salen T1, T2 y FLAIR con contrastes ajustables después de la exploración.","siemens":"— (SyMRI, de terceros)","ge":"MAGiC","philips":"SyntAc","canon":"— (SyMRI, de terceros)"},{"familia":"Cuantitativas y avanzadas","nombre":"MR Fingerprinting","utilidad":"T1 y T2 cuantitativos rápidos para tumores, epilepsia y esclerosis múltiple; uso todavía limitado.","principio":"Secuencia con parámetros pseudoaleatorios (ángulo, TR); la «huella» de señal de cada píxel se compara con un diccionario simulado.","atajo":"Mapas T1 y T2 en pocos minutos a partir de una única adquisición.","siemens":"MR Fingerprinting","ge":"MRF (investigación)","philips":"—","canon":"—"},{"familia":"Cuantitativas y avanzadas","nombre":"UTE / ZTE (TE ultracorto o cero)","utilidad":"Hueso cortical, tendones y ligamentos, pulmón, mapa de atenuación en PET-RM, dientes, «pseudo-TC» craneal.","principio":"TE ultracorto (menos de 0,1 ms) con lectura radial que capta los tejidos de T2 muy corto que en el resto de secuencias son negros.","atajo":"Hueso cortical y tendones con señal; la imagen invertida se parece a una TC.","siemens":"UTE / PETRA","ge":"ZTE (oZTEo, Silent)","philips":"3D UTE","canon":"UTE"},{"familia":"Cuantitativas y avanzadas","nombre":"Elastografía por RM (MRE)","utilidad":"Fibrosis hepática (alternativa a la biopsia); en investigación en cerebro y mama.","principio":"Un tambor neumático genera ondas de 60 Hz; una GRE o EPI codificada en movimiento mide la longitud de onda y produce un mapa de rigidez en kPa.","atajo":"Ondas de color sobre el hígado y elastograma; más de 5 kPa sugiere cirrosis.","siemens":"MR Elastography","ge":"MR-Touch","philips":"MR Elastography","canon":"MR Elastography"},{"familia":"Cuantitativas y avanzadas","nombre":"CEST / APT (transferencia por intercambio químico)","utilidad":"Gliomas (grado y recidiva), ictus (pH), cartílago (gagCEST).","principio":"Saturación selectiva de los protones amida (+3,5 ppm) que se intercambian con el agua; se mide la asimetría del espectro Z (MTRasym).","atajo":"Mapa de color donde los tumores de alto grado brillan por su contenido proteico.","siemens":"CEST (WIP)","ge":"CEST (investigación)","philips":"3D APT","canon":"—"},{"familia":"Aceleración y reconstrucción (no son secuencias, pero aparecen en el protocolo)","nombre":"Localizador (scout)","utilidad":"Primera adquisición de todo estudio para planificar los cortes en los tres planos.","principio":"GRE o bSSFP muy rápida y de baja resolución en axial, coronal y sagital; 10–20 s.","atajo":"Tres planos borrosos con líneas de planificación superpuestas.","siemens":"Localizer","ge":"3-Plane Localizer","philips":"Survey","canon":"Locator"},{"familia":"Aceleración y reconstrucción (no son secuencias, pero aparecen en el protocolo)","nombre":"Imagen paralela","utilidad":"Acortar cualquier secuencia (factor 2–4) a costa de algo de señal; imprescindible en apneas y 3D.","principio":"Bobinas multicanal: se saltan líneas del espacio K y se reconstruye con la sensibilidad de cada elemento, en el dominio de la imagen (SENSE) o del espacio K (GRAPPA).","atajo":"Artefacto típico: solapamiento («aliasing») o ruido en la zona central de la imagen.","siemens":"GRAPPA / mSENSE / CAIPIRINHA","ge":"ASSET / ARC","philips":"SENSE","canon":"SPEEDER"},{"familia":"Aceleración y reconstrucción (no son secuencias, pero aparecen en el protocolo)","nombre":"Multicorte simultáneo (SMS)","utilidad":"Acelerar DWI, DTI y BOLD (factor 2–4) y las TSE de columna sin perder resolución.","principio":"Pulsos multibanda excitan varios cortes a la vez y la geometría de la bobina los separa en la reconstrucción.","atajo":"Misma imagen en la mitad de tiempo; a veces un leve «fantasma» entre cortes emparejados.","siemens":"SMS (Simultaneous Multi-Slice)","ge":"HyperBand","philips":"MultiBand SENSE","canon":"—"},{"familia":"Aceleración y reconstrucción (no son secuencias, pero aparecen en el protocolo)","nombre":"Compressed sensing","utilidad":"Acelerar 3D, cine cardíaco, angiografía y colangio-RM (factor 2–8), incluso en respiración libre.","principio":"Submuestreo aleatorio del espacio K y reconstrucción iterativa que aprovecha la dispersión (sparsity) de la imagen.","atajo":"Sin aliasing; si se exagera, la imagen adquiere un aspecto «pintado» o excesivamente suavizado.","siemens":"Compressed Sensing (CS)","ge":"HyperSense","philips":"Compressed SENSE","canon":"Compressed SPEEDER"},{"familia":"Aceleración y reconstrucción (no son secuencias, pero aparecen en el protocolo)","nombre":"Reconstrucción con aprendizaje profundo","utilidad":"Reducir ruido y tiempo en cualquier secuencia (30–60 %) manteniendo o mejorando la resolución.","principio":"Redes neuronales entrenadas que eliminan ruido y artefactos de Gibbs a partir de datos submuestreados.","atajo":"Imagen «limpia» y nítida en tiempos muy cortos; grano fino característico si se fuerza demasiado.","siemens":"Deep Resolve","ge":"AIR Recon DL","philips":"SmartSpeed","canon":"AiCE / PIQE"}];
+
+  var FAMILIAS = [];
+  DATOS.forEach(function (s) { if (FAMILIAS.indexOf(s.familia) < 0) FAMILIAS.push(s.familia); });
+
+  var $busqueda = document.getElementById("busqueda");
+  var $limpiar = document.getElementById("limpiar");
+  var $filtros = document.getElementById("filtros");
+  var $tarjetas = document.getElementById("tarjetas");
+  var $cuerpo = document.getElementById("cuerpo-tabla");
+  var $contador = document.getElementById("contador");
+  var $vacio = document.getElementById("vacio");
+  var $compacta = document.getElementById("compacta");
+
+  var familiaActiva = "";
+  var consulta = "";
+
+  function normalizar(t) {
+    return String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  }
+  function escapar(t) {
+    return String(t).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  // Resalta cada palabra de la consulta dentro del texto, ignorando acentos.
+  function resaltar(texto, palabras) {
+    texto = String(texto);
+    if (!palabras.length) return escapar(texto);
+    var plano = normalizar(texto);
+    if (plano.length !== texto.length) return escapar(texto); // texto con caracteres compuestos raros: sin resaltar
+    var marcas = new Array(texto.length);
+    palabras.forEach(function (p) {
+      var i = plano.indexOf(p);
+      while (i >= 0) {
+        for (var k = i; k < i + p.length; k++) marcas[k] = true;
+        i = plano.indexOf(p, i + 1);
+      }
+    });
+    var salida = "", dentro = false;
+    for (var j = 0; j < texto.length; j++) {
+      if (marcas[j] && !dentro) { salida += "<mark>"; dentro = true; }
+      if (!marcas[j] && dentro) { salida += "</mark>"; dentro = false; }
+      salida += escapar(texto[j]);
+    }
+    if (dentro) salida += "</mark>";
+    return salida;
+  }
+
+  function filtrar() {
+    var palabras = normalizar(consulta).split(/\s+/).filter(Boolean);
+    var lista = DATOS.filter(function (s) {
+      if (familiaActiva && s.familia !== familiaActiva) return false;
+      if (!palabras.length) return true;
+      var todo = normalizar([s.familia, s.nombre, s.utilidad, s.principio, s.atajo, s.siemens, s.ge, s.philips, s.canon].join(" | "));
+      return palabras.every(function (p) { return todo.indexOf(p) >= 0; });
+    });
+    return { lista: lista, palabras: palabras };
+  }
+
+  function marca(nombre, valor, palabras) {
+    return '<div class="marca"><b>' + nombre + "</b>" + resaltar(valor, palabras) + "</div>";
+  }
+
+  function pintar() {
+    var r = filtrar(), lista = r.lista, p = r.palabras;
+
+    var html = "", familiaPrevia = null;
+    lista.forEach(function (s) {
+      if (s.familia !== familiaPrevia) {
+        html += '<h2 class="grupo-titulo">' + escapar(s.familia) + "</h2>";
+        familiaPrevia = s.familia;
+      }
+      html += '<article class="tarjeta">' +
+        "<h2>" + resaltar(s.nombre, p) + "</h2>" +
+        '<div class="atajo">' + resaltar(s.atajo, p) + "</div>" +
+        '<div class="campo"><b>Utilidad</b>' + resaltar(s.utilidad, p) + "</div>" +
+        '<div class="campo"><b>Principio técnico</b>' + resaltar(s.principio, p) + "</div>" +
+        '<div class="marcas">' +
+          marca("Siemens", s.siemens, p) + marca("GE", s.ge, p) +
+          marca("Philips", s.philips, p) + marca("Canon", s.canon, p) +
+        "</div></article>";
+    });
+    $tarjetas.innerHTML = html;
+
+    var filas = "";
+    lista.forEach(function (s) {
+      filas += "<tr>" +
+        '<td class="c-familia">' + resaltar(s.familia, p) + "</td>" +
+        '<td class="c-nombre">' + resaltar(s.nombre, p) + "</td>" +
+        '<td class="col-oculta">' + resaltar(s.utilidad, p) + "</td>" +
+        '<td class="col-oculta">' + resaltar(s.principio, p) + "</td>" +
+        '<td class="c-atajo">' + resaltar(s.atajo, p) + "</td>" +
+        "<td>" + resaltar(s.siemens, p) + "</td>" +
+        "<td>" + resaltar(s.ge, p) + "</td>" +
+        "<td>" + resaltar(s.philips, p) + "</td>" +
+        "<td>" + resaltar(s.canon, p) + "</td>" +
+        "</tr>";
+    });
+    $cuerpo.innerHTML = filas;
+
+    $vacio.hidden = lista.length > 0;
+    $contador.textContent = lista.length + " de " + DATOS.length + " secuencias";
+    $limpiar.hidden = !consulta;
+  }
+
+  // Chips de familia
+  function chip(texto, valor) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = texto;
+    b.setAttribute("aria-pressed", valor === familiaActiva ? "true" : "false");
+    b.addEventListener("click", function () {
+      familiaActiva = valor;
+      Array.prototype.forEach.call($filtros.children, function (c) {
+        c.setAttribute("aria-pressed", c === b ? "true" : "false");
+      });
+      pintar();
+      b.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+    return b;
+  }
+  $filtros.appendChild(chip("Todas", ""));
+  FAMILIAS.forEach(function (f) {
+    var corto = f.split(":")[0].replace(/\s*\([^)]*\)\s*$/, "").replace(" y preparación del contraste", "");
+    $filtros.appendChild(chip(corto, f));
+  });
+
+  $busqueda.addEventListener("input", function () { consulta = $busqueda.value; pintar(); });
+  $busqueda.addEventListener("keydown", function (e) { if (e.key === "Enter") $busqueda.blur(); });
+  $limpiar.addEventListener("click", function () { $busqueda.value = ""; consulta = ""; pintar(); $busqueda.focus(); });
+  $compacta.addEventListener("change", function () { document.body.classList.toggle("compacta", $compacta.checked); });
+
+  // La cabecera de la tabla se pega justo debajo de la cabecera fija.
+  function medirCabecera() {
+    document.documentElement.style.setProperty("--alto-cabecera", document.querySelector(".cabecera").offsetHeight + "px");
+  }
+  window.addEventListener("resize", medirCabecera);
+  medirCabecera();
+
+  pintar();
+})();
+</script>
+</body>
+</html>
